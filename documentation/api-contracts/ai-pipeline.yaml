@@ -1,0 +1,105 @@
+openapi: 3.0.3
+info:
+  title: Course Integrity Monitor - AI Pipeline
+  version: 1.0.0
+  description: Inference and training API for the Ollama + PyTorch based AI-usage detector.
+servers:
+  - url: http://localhost:8001
+paths:
+  /healthz:
+    get:
+      summary: Service readiness probe
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Message"
+  /analyze:
+    post:
+      summary: Analyze a quiz answer for AI usage
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AnalyzePayload"
+      responses:
+        "200":
+          description: AI usage inference output
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AnalyzeResponse"
+  /train:
+    post:
+      summary: Update the logistic blender with labeled samples
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TrainPayload"
+      responses:
+        "200":
+          description: Model updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Message"
+components:
+  schemas:
+    Message:
+      type: object
+      properties:
+        status:
+          type: string
+        detail:
+          type: string
+    AnalyzePayload:
+      type: object
+      required: [answer]
+      properties:
+        answer:
+          type: string
+          description: Student answer text extracted via OCR or JSON
+        topic:
+          type: string
+          description: Optional topic label, e.g., "Testing"
+        course_name:
+          type: string
+          description: Optional course label for logging
+    AnalyzeResponse:
+      type: object
+      properties:
+        ai_probability:
+          type: number
+          format: float
+        flagged:
+          type: boolean
+        coherence:
+          type: number
+        cross_perplexity:
+          type: number
+        tocsin:
+          type: number
+        length_norm:
+          type: number
+    TrainPayload:
+      type: object
+      required: [samples]
+      properties:
+        samples:
+          type: array
+          items:
+            $ref: "#/components/schemas/TrainingSample"
+    TrainingSample:
+      type: object
+      required: [answer, label]
+      properties:
+        answer:
+          type: string
+        label:
+          type: number
+          description: 1.0 if AI-generated, 0.0 if human

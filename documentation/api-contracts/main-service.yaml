@@ -1,0 +1,512 @@
+openapi: 3.0.3
+info:
+  title: Course Integrity Monitor - Main Service
+  version: 1.0.0
+  description: >
+    REST contract for the FastAPI backend that manages users, courses, student rosters,
+    quiz submissions, and AI risk analytics.
+servers:
+  - url: http://localhost:8000
+    description: Local development
+paths:
+  /healthz:
+    get:
+      summary: Service health probe
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Message"
+  /auth/signup:
+    post:
+      summary: Create instructor account
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserCreate"
+      responses:
+        "200":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+  /auth/login:
+    post:
+      summary: Login and receive session token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserLogin"
+      responses:
+        "200":
+          description: Authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+  /courses:
+    get:
+      summary: List courses
+      parameters:
+        - in: query
+          name: user_id
+          schema:
+            type: integer
+          required: false
+          description: Filter courses assigned to a user
+      responses:
+        "200":
+          description: Course collection
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Course"
+  /courses/import:
+    post:
+      summary: Import or upsert courses in bulk
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: "#/components/schemas/CourseCreate"
+      responses:
+        "200":
+          description: Imported courses
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Course"
+  /courses/topics/import:
+    post:
+      summary: Import course topics
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: "#/components/schemas/CourseTopicCreate"
+      responses:
+        "200":
+          description: Imported course topics
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CourseTopic"
+  /courses/{course_id}/summary:
+    get:
+      summary: Course AI usage summary
+      parameters:
+        - in: path
+          name: course_id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Aggregated risk metrics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CourseSummary"
+  /courses/{course_id}/assign/{user_id}:
+    post:
+      summary: Assign instructor to a course
+      parameters:
+        - in: path
+          name: course_id
+          required: true
+          schema:
+            type: integer
+        - in: path
+          name: user_id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Assignment created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Message"
+  /students:
+    get:
+      summary: List students
+      responses:
+        "200":
+          description: Student roster
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Student"
+  /students/import:
+    post:
+      summary: Import students
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: "#/components/schemas/StudentCreate"
+      responses:
+        "200":
+          description: Imported roster
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Student"
+  /submissions:
+    get:
+      summary: List submissions
+      responses:
+        "200":
+          description: Submission list in reverse chronological order
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Submission"
+  /submissions/import:
+    post:
+      summary: Import submissions via JSON payload
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: "#/components/schemas/SubmissionCreate"
+      responses:
+        "200":
+          description: Imported submissions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Submission"
+  /import-file/courses:
+    post:
+      summary: Upload CSV/XLSX course manifest
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        "200":
+          description: Imported courses
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Course"
+  /import-file/students:
+    post:
+      summary: Upload CSV/XLSX roster
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        "200":
+          description: Imported students
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Student"
+  /import-file/submissions:
+    post:
+      summary: Upload CSV/XLSX/PDF submissions
+      parameters:
+        - in: query
+          name: course_id
+          schema:
+            type: integer
+        - in: query
+          name: student_email
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        "200":
+          description: Imported submissions with live AI evaluation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Submission"
+  /analytics/overview:
+    get:
+      summary: Risk overview
+      responses:
+        "200":
+          description: Summary of risky courses and students
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AnalyticsOverview"
+  /analytics/topics:
+    get:
+      summary: Topic-level risk stats
+      responses:
+        "200":
+          description: Topic analytics
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AnalyticsByTopic"
+components:
+  schemas:
+    Message:
+      type: object
+      properties:
+        detail:
+          type: string
+    UserCreate:
+      type: object
+      required: [email, password]
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+    UserLogin:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+        password:
+          type: string
+    AuthResponse:
+      type: object
+      properties:
+        token:
+          type: string
+        user_id:
+          type: integer
+    CourseCreate:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+        section_number:
+          type: integer
+          nullable: true
+        description:
+          type: string
+          nullable: true
+        content_manifest:
+          type: string
+          description: JSON manifest of uploaded assets
+    Course:
+      allOf:
+        - $ref: "#/components/schemas/CourseCreate"
+        - type: object
+          properties:
+            id:
+              type: integer
+    CourseTopicCreate:
+      type: object
+      required: [title, category]
+      properties:
+        title:
+          type: string
+        category:
+          type: string
+        course_id:
+          type: integer
+          nullable: true
+    CourseTopic:
+      allOf:
+        - $ref: "#/components/schemas/CourseTopicCreate"
+        - type: object
+          properties:
+            id:
+              type: integer
+    StudentCreate:
+      type: object
+      required: [name, email]
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+    Student:
+      allOf:
+        - $ref: "#/components/schemas/StudentCreate"
+        - type: object
+          properties:
+            id:
+              type: integer
+    SubmissionCreate:
+      type: object
+      required: [answer_text]
+      properties:
+        student_id:
+          type: integer
+        student_email:
+          type: string
+        course_id:
+          type: integer
+        course_name:
+          type: string
+        topic_id:
+          type: integer
+        topic_title:
+          type: string
+        topic_category:
+          type: string
+        answer_text:
+          type: string
+        raw_score:
+          type: number
+        final_score:
+          type: number
+        exam_type:
+          type: string
+        source_filename:
+          type: string
+        source_path:
+          type: string
+    Submission:
+      allOf:
+        - $ref: "#/components/schemas/SubmissionCreate"
+        - type: object
+          properties:
+            id:
+              type: integer
+            student_name:
+              type: string
+            ai_probability:
+              type: number
+            flagged:
+              type: boolean
+            submitted_at:
+              type: string
+              format: date-time
+    AnalyticsByTopic:
+      type: object
+      properties:
+        course_id:
+          type: integer
+        course_name:
+          type: string
+        topic_id:
+          type: integer
+          nullable: true
+        topic_title:
+          type: string
+        average_ai_probability:
+          type: number
+        flagged_count:
+          type: integer
+        submission_count:
+          type: integer
+    StudentRisk:
+      type: object
+      properties:
+        student_id:
+          type: integer
+        student_name:
+          type: string
+        student_email:
+          type: string
+        flagged_submissions:
+          type: integer
+        average_ai_probability:
+          type: number
+        latest_final_score:
+          type: number
+          nullable: true
+    AnalyticsOverview:
+      type: object
+      properties:
+        generated_at:
+          type: string
+          format: date-time
+        most_risky_courses:
+          type: array
+          items:
+            $ref: "#/components/schemas/AnalyticsByTopic"
+        student_risks:
+          type: array
+          items:
+            $ref: "#/components/schemas/StudentRisk"
+    CourseSummary:
+      type: object
+      properties:
+        course_id:
+          type: integer
+        course_name:
+          type: string
+        section_number:
+          type: integer
+          nullable: true
+        total_submissions:
+          type: integer
+        flagged_submissions:
+          type: integer
+        average_ai_probability:
+          type: number
+        top_topics:
+          type: array
+          items:
+            $ref: "#/components/schemas/AnalyticsByTopic"
