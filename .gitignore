@@ -1,0 +1,35 @@
+# Python
+__pycache__/
+*.pyc
+.mypy_cache/
+.pytest_cache/
+.venv/
+env/
+
+# FastAPI/SQLModel database artifacts
+main-service/app.db
+
+# Node/React
+node_modules/
+frontend/node_modules/
+frontend/dist/
+
+# Logs & local data
+*.log
+*.sqlite3
+*.db
+*.pkl
+
+# Environment files
+.env
+frontend/.env
+
+# IDE/editor
+.DS_Store
+.idea/
+.vscode/
+
+# Docker/ML artifacts
+ai-pipeline/mlruns/
+ai-pipeline/models/
+ai-pipeline/data/
