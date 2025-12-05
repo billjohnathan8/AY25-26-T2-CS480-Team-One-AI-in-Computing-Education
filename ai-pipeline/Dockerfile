@@ -3,17 +3,16 @@ FROM python:3.11-slim AS base
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1
 
-WORKDIR /pipeline
+WORKDIR /workspace/ai-pipeline
 
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+COPY ai-pipeline/requirements.txt ./requirements.txt
+RUN pip install --no-cache-dir --upgrade pip \
+    && pip install --no-cache-dir -r requirements.txt
 
-COPY app.py .
-COPY detectors ./detectors
-COPY models ./models
-COPY experiments ./experiments
-COPY data ./data
-COPY mlruns ./mlruns
+COPY ai-pipeline/. .
+
+# Provide contract assets for /contracts routes that expect repo root layout
+COPY documentation /workspace/documentation
 
 EXPOSE 8001
 

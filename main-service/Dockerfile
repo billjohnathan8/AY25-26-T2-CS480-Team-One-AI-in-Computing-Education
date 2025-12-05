@@ -3,13 +3,17 @@ FROM python:3.11-slim AS base
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1
 
-WORKDIR /code
+WORKDIR /workspace/main-service
 
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+COPY main-service/requirements.txt ./requirements.txt
+RUN pip install --no-cache-dir --upgrade pip \
+    && pip install --no-cache-dir -r requirements.txt
 
-COPY app ./app
-COPY tests ./tests
+COPY main-service/app ./app
+COPY main-service/tests ./tests
+
+# Provide contract assets for /contracts routes that expect repo root layout
+COPY documentation /workspace/documentation
 
 EXPOSE 8000
 
