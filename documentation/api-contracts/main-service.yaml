@@ -70,6 +70,18 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/Course"
+  /courses/topics:
+    get:
+      summary: List available topics across courses
+      responses:
+        "200":
+          description: Topic catalog
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CourseTopic"
   /courses/import:
     post:
       summary: Import or upsert courses in bulk
@@ -286,6 +298,22 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/Submission"
+  /api/detect:
+    post:
+      summary: Lightweight prediction endpoint used by internal services
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DetectRequest"
+      responses:
+        "200":
+          description: Probability and label derived from the detector ensemble
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DetectResponse"
   /analytics/overview:
     get:
       summary: Risk overview
@@ -313,8 +341,11 @@ components:
     Message:
       type: object
       properties:
+        status:
+          type: string
         detail:
           type: string
+      additionalProperties: false
     UserCreate:
       type: object
       required: [email, password]
@@ -426,6 +457,9 @@ components:
           type: string
         source_path:
           type: string
+        ocr_text:
+          type: string
+          description: Optional OCR extracted text when ingesting documents
     Submission:
       allOf:
         - $ref: "#/components/schemas/SubmissionCreate"
@@ -442,6 +476,22 @@ components:
             submitted_at:
               type: string
               format: date-time
+    DetectRequest:
+      type: object
+      required: [text]
+      properties:
+        text:
+          type: string
+          description: Plain-text submission to score
+    DetectResponse:
+      type: object
+      properties:
+        prob_ai:
+          type: number
+          format: float
+          description: Probability that the submission is AI generated
+        label:
+          type: string
     AnalyticsByTopic:
       type: object
       properties:
