@@ -62,7 +62,7 @@ export function useImportMutations() {
   const coursesMutation = useMutation({
     mutationFn: importCourses,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: COURSE_TOPICS_KEY });
+      queryClient.invalidateQueries({ queryKey: COURSES_KEY });
     },
   });
 

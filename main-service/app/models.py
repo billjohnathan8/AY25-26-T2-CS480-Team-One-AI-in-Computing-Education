@@ -1,7 +1,5 @@
-from __future__ import annotations
-
 from datetime import datetime
-from typing import Optional
+from typing import List, Optional
 
 from sqlmodel import Field, Relationship, SQLModel
 
@@ -14,7 +12,7 @@ class UserBase(SQLModel):
 class User(UserBase, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     hashed_password: str
-    courses: list["UserCourse"] = Relationship(back_populates="user")
+    courses: List["UserCourse"] = Relationship(back_populates="user")
 
 
 class UserCourse(SQLModel, table=True):
@@ -36,9 +34,9 @@ class Course(CourseBase, table=True):
     content_manifest: Optional[str] = Field(
         default=None, description="JSON describing uploaded course content assets"
     )
-    topics: list["CourseTopic"] = Relationship(back_populates="course")
-    submissions: list["QuizSubmission"] = Relationship(back_populates="course")
-    lecturers: list[UserCourse] = Relationship(back_populates="course")
+    topics: List["CourseTopic"] = Relationship(back_populates="course")
+    submissions: List["QuizSubmission"] = Relationship(back_populates="course")
+    lecturers: List["UserCourse"] = Relationship(back_populates="course")
 
 
 class CourseTopicBase(SQLModel):
@@ -50,7 +48,7 @@ class CourseTopicBase(SQLModel):
 class CourseTopic(CourseTopicBase, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     course: Optional[Course] = Relationship(back_populates="topics")
-    submissions: list["QuizSubmission"] = Relationship(back_populates="topic")
+    submissions: List["QuizSubmission"] = Relationship(back_populates="topic")
 
 
 class StudentBase(SQLModel):
@@ -60,7 +58,7 @@ class StudentBase(SQLModel):
 
 class Student(StudentBase, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
-    submissions: list["QuizSubmission"] = Relationship(back_populates="student")
+    submissions: List["QuizSubmission"] = Relationship(back_populates="student")
 
 
 class QuizSubmissionBase(SQLModel):
