@@ -7,6 +7,7 @@ import { CourseCatalog } from "../components/CourseCatalog";
 import { CorrelationAnalysis } from "../components/CorrelationAnalysis";
 import { Dashboard } from "../components/Dashboard";
 import { DataImport } from "../components/DataImport";
+import { SubmissionsMenu } from "../components/SubmissionsMenu";
 import { StudentAnalytics } from "../components/StudentAnalytics";
 import {
   useCourseTopicsQuery,
@@ -352,24 +353,33 @@ export default function App() {
 
       <nav className="bg-white border-b border-gray-200">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="flex space-x-8 overflow-x-auto">
-            {tabs.map((tab) => {
-              const Icon = tab.icon;
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center gap-2 px-3 py-4 border-b-2 transition-colors whitespace-nowrap ${
-                    activeTab === tab.id
-                      ? "border-blue-500 text-blue-600"
-                      : "border-transparent text-gray-600 hover:text-gray-900 hover:border-gray-300"
-                  }`}
-                >
-                  <Icon className="h-4 w-4" />
-                  {tab.label}
-                </button>
-              );
-            })}
+          <div className="flex flex-col gap-3 py-1 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-1 space-x-8 overflow-x-auto">
+              {tabs.map((tab) => {
+                const Icon = tab.icon;
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    className={`flex items-center gap-2 px-3 py-4 border-b-2 transition-colors whitespace-nowrap ${
+                      activeTab === tab.id
+                        ? "border-blue-500 text-blue-600"
+                        : "border-transparent text-gray-600 hover:text-gray-900 hover:border-gray-300"
+                    }`}
+                  >
+                    <Icon className="h-4 w-4" />
+                    {tab.label}
+                  </button>
+                );
+              })}
+            </div>
+            <SubmissionsMenu
+              submissions={filteredQuizAnswers}
+              onReevaluate={() => {
+                void quizQuery.refetch();
+              }}
+              isReevaluating={quizQuery.isFetching}
+            />
           </div>
         </div>
       </nav>

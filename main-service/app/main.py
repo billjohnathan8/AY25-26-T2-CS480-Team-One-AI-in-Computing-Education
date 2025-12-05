@@ -7,7 +7,7 @@ from fastapi.responses import FileResponse, PlainTextResponse
 
 from .config import get_settings
 from .database import init_db
-from .routers import analytics, auth, courses, imports, students, submissions
+from .routers import analytics, auth, courses, detection, imports, students, submissions
 
 CONTRACT_FILE = Path(__file__).resolve().parents[2] / "documentation" / "api-contracts" / "main-service.yaml"
 
@@ -49,6 +49,7 @@ def create_app() -> FastAPI:
     app.include_router(auth.router)
     app.include_router(courses.router)
     app.include_router(students.router)
+    app.include_router(detection.router)
     app.include_router(submissions.router)
     app.include_router(analytics.router)
     app.include_router(imports.router)

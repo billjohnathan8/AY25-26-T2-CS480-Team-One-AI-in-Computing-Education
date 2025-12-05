@@ -1,33 +1,28 @@
 import asyncio
 
-import httpx
 from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import Session
 
 from .. import crud
-from ..config import get_settings
 from ..database import get_session
 from ..schemas import SubmissionCreate, SubmissionRead
+from ..services.detector_service import detector
 
 router = APIRouter(prefix="/submissions", tags=["submissions"])
-settings = get_settings()
 
 
 async def _fetch_ai_probability(payload: SubmissionCreate) -> float:
-    data = {
-        "answer": payload.answer_text,
-        "topic": payload.topic_title or "general",
-        "course_name": payload.course_name,
-    }
-    try:
-        async with httpx.AsyncClient(timeout=15) as client:
-            response = await client.post(f"{settings.ai_pipeline_url}/analyze", json=data)
-            response.raise_for_status()
-            body = response.json()
-            return float(body.get("ai_probability", 0.0))
-    except Exception:
-        # fall back to deterministic low score when AI service is not ready
-        return 0.05
+    loop = asyncio.get_running_loop()
+
+    def _predict() -> float:
+        try:
+            result = detector.predict(payload.answer_text or "")
+            return float(result.get("prob_ai", 0.0))
+        except Exception:
+            # fall back to deterministic low score when the detector fails
+            return 0.05
+
+    return await loop.run_in_executor(None, _predict)
 
 
 def _serialize(submission) -> SubmissionRead:
