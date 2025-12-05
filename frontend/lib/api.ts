@@ -9,6 +9,33 @@ export const apiClient = axios.create({
   },
 });
 
+let authToken: string | null = null;
+
+export function setAuthToken(token: string | null) {
+  authToken = token;
+  if (token) {
+    apiClient.defaults.headers.common.Authorization = `Bearer ${token}`;
+  } else {
+    delete apiClient.defaults.headers.common.Authorization;
+  }
+}
+
+export interface AuthResponse {
+  token: string;
+  user_id: number;
+}
+
+export interface SignupPayload {
+  email: string;
+  password: string;
+  name?: string | null;
+}
+
+export interface LoginPayload {
+  email: string;
+  password: string;
+}
+
 export interface CourseCreatePayload {
   name: string;
   section_number?: number | null;
@@ -79,6 +106,12 @@ export async function fetchCourseTopics(): Promise<CourseTopic[]> {
   return data;
 }
 
+export async function fetchCourses(userId?: number): Promise<CourseRead[]> {
+  const params = userId ? { user_id: userId } : undefined;
+  const { data } = await apiClient.get<CourseRead[]>("/courses", { params });
+  return data;
+}
+
 export async function fetchStudents(): Promise<Student[]> {
   const { data } = await apiClient.get<Student[]>("/students");
   return data;
@@ -99,6 +132,10 @@ export async function importTopics(payload: CourseTopicPayload[]): Promise<Cours
   return data;
 }
 
+export async function assignCourseToUser(courseId: number, userId: number): Promise<void> {
+  await apiClient.post(`/courses/${courseId}/assign/${userId}`);
+}
+
 export async function importStudents(payload: StudentPayload[]): Promise<Student[]> {
   const { data } = await apiClient.post<Student[]>("/students/import", payload);
   return data;
@@ -106,5 +143,15 @@ export async function importStudents(payload: StudentPayload[]): Promise<Student
 
 export async function importSubmissions(payload: SubmissionPayload[]): Promise<Submission[]> {
   const { data } = await apiClient.post<Submission[]>("/submissions/import", payload);
+  return data;
+}
+
+export async function login(payload: LoginPayload): Promise<AuthResponse> {
+  const { data } = await apiClient.post<AuthResponse>("/auth/login", payload);
+  return data;
+}
+
+export async function signup(payload: SignupPayload): Promise<AuthResponse> {
+  const { data } = await apiClient.post<AuthResponse>("/auth/signup", payload);
   return data;
 }
