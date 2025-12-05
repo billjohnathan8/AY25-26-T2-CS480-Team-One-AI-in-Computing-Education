@@ -5,22 +5,54 @@ const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:8000";
 export const apiClient = axios.create({
   baseURL: API_URL,
   headers: {
-    "Content-Type": "application/json"
-  }
+    "Content-Type": "application/json",
+  },
 });
 
-export interface Course {
-  id: number;
+export interface CourseCreatePayload {
   name: string;
-  section_number?: number;
-  description?: string;
+  section_number?: number | null;
+  description?: string | null;
   content_manifest?: string | null;
 }
 
-export interface Student {
+export interface CourseRead extends CourseCreatePayload {
   id: number;
+}
+
+export interface CourseTopicPayload {
+  title: string;
+  category: string;
+  course_id?: number | null;
+}
+
+export interface CourseTopic extends CourseTopicPayload {
+  id: number;
+}
+
+export interface StudentPayload {
   name: string;
   email: string;
+}
+
+export interface Student extends StudentPayload {
+  id: number;
+}
+
+export interface SubmissionPayload {
+  student_id?: number;
+  student_email?: string;
+  course_id?: number;
+  course_name?: string;
+  topic_id?: number;
+  topic_title?: string;
+  topic_category?: string;
+  answer_text: string;
+  raw_score?: number;
+  final_score?: number;
+  exam_type?: string;
+  source_filename?: string;
+  source_path?: string;
 }
 
 export interface Submission {
@@ -39,60 +71,16 @@ export interface Submission {
   student_email?: string | null;
   course_name?: string | null;
   topic_title?: string | null;
+  topic_category?: string | null;
 }
 
-export interface AnalyticsByTopic {
-  course_id: number;
-  course_name: string;
-  topic_id?: number | null;
-  topic_title?: string | null;
-  average_ai_probability: number;
-  flagged_count: number;
-  submission_count: number;
-}
-
-export interface StudentRisk {
-  student_id: number;
-  student_name: string;
-  student_email: string;
-  flagged_submissions: number;
-  average_ai_probability: number;
-  latest_final_score?: number | null;
-}
-
-export interface AnalyticsOverview {
-  generated_at: string;
-  most_risky_courses: AnalyticsByTopic[];
-  student_risks: StudentRisk[];
-}
-
-export interface CourseSummary {
-  course_id: number;
-  course_name: string;
-  section_number?: number | null;
-  total_submissions: number;
-  flagged_submissions: number;
-  average_ai_probability: number;
-  top_topics: AnalyticsByTopic[];
-}
-
-export interface AuthResponse {
-  token: string;
-  user_id: number;
-}
-
-export async function fetchAnalytics(): Promise<AnalyticsOverview> {
-  const { data } = await apiClient.get<AnalyticsOverview>("/analytics/overview");
+export async function fetchCourseTopics(): Promise<CourseTopic[]> {
+  const { data } = await apiClient.get<CourseTopic[]>("/courses/topics");
   return data;
 }
 
-export async function login(email: string, password: string): Promise<AuthResponse> {
-  const { data } = await apiClient.post<AuthResponse>("/auth/login", { email, password });
-  return data;
-}
-
-export async function signup(name: string, email: string, password: string): Promise<AuthResponse> {
-  const { data } = await apiClient.post<AuthResponse>("/auth/signup", { name, email, password });
+export async function fetchStudents(): Promise<Student[]> {
+  const { data } = await apiClient.get<Student[]>("/students");
   return data;
 }
 
@@ -101,67 +89,22 @@ export async function fetchSubmissions(): Promise<Submission[]> {
   return data;
 }
 
-export async function importCourses(payload: unknown): Promise<Course[]> {
-  const { data } = await apiClient.post<Course[]>("/courses/import", payload);
+export async function importCourses(payload: CourseCreatePayload[]): Promise<CourseRead[]> {
+  const { data } = await apiClient.post<CourseRead[]>("/courses/import", payload);
   return data;
 }
 
-export async function importTopics(payload: unknown) {
-  const { data } = await apiClient.post("/courses/topics/import", payload);
+export async function importTopics(payload: CourseTopicPayload[]): Promise<CourseTopic[]> {
+  const { data } = await apiClient.post<CourseTopic[]>("/courses/topics/import", payload);
   return data;
 }
 
-export async function importStudents(payload: unknown): Promise<Student[]> {
+export async function importStudents(payload: StudentPayload[]): Promise<Student[]> {
   const { data } = await apiClient.post<Student[]>("/students/import", payload);
   return data;
 }
 
-export async function importSubmissions(payload: unknown): Promise<Submission[]> {
+export async function importSubmissions(payload: SubmissionPayload[]): Promise<Submission[]> {
   const { data } = await apiClient.post<Submission[]>("/submissions/import", payload);
   return data;
-}
-
-export async function uploadCoursesFile(file: File): Promise<Course[]> {
-  const body = new FormData();
-  body.append("file", file);
-  const { data } = await apiClient.post<Course[]>("/import-file/courses", body, {
-    headers: { "Content-Type": "multipart/form-data" }
-  });
-  return data;
-}
-
-export async function uploadStudentsFile(file: File): Promise<Student[]> {
-  const body = new FormData();
-  body.append("file", file);
-  const { data } = await apiClient.post<Student[]>("/import-file/students", body, {
-    headers: { "Content-Type": "multipart/form-data" }
-  });
-  return data;
-}
-
-export async function uploadSubmissionsFile(file: File, courseId?: number, studentEmail?: string) {
-  const body = new FormData();
-  body.append("file", file);
-  const params = new URLSearchParams();
-  if (courseId) params.append("course_id", String(courseId));
-  if (studentEmail) params.append("student_email", studentEmail);
-  const { data } = await apiClient.post<Submission[]>(
-    `/import-file/submissions?${params.toString()}`,
-    body,
-    {
-      headers: { "Content-Type": "multipart/form-data" }
-    }
-  );
-  return data;
-}
-
-export async function fetchCourseSummaries(userId?: number): Promise<CourseSummary[]> {
-  const { data } = await apiClient.get<CourseSummary[]>(`/courses`, { params: { user_id: userId } });
-  const summaries = await Promise.all(
-    data.map(async (course) => {
-      const summaryResponse = await apiClient.get<CourseSummary>(`/courses/${course.id}/summary`);
-      return summaryResponse.data;
-    })
-  );
-  return summaries;
 }

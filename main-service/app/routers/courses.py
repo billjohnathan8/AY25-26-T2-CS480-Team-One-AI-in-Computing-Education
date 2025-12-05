@@ -16,6 +16,11 @@ def list_courses(
     return [CourseRead.from_orm(c) for c in crud.list_courses(session, user_id=user_id)]
 
 
+@router.get("/topics", response_model=list[CourseTopicRead])
+def list_topics(session: Session = Depends(get_session)) -> list[CourseTopicRead]:
+    return [CourseTopicRead.from_orm(topic) for topic in crud.list_topics(session)]
+
+
 @router.post("/import", response_model=list[CourseRead])
 def import_courses(
     payload: list[CourseCreate],

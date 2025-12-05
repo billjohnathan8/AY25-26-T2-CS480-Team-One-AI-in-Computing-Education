@@ -47,6 +47,7 @@ def _serialize(submission) -> SubmissionRead:
         student_email=getattr(submission.student, "email", None),
         course_name=getattr(submission.course, "name", None),
         topic_title=getattr(submission.topic, "title", None),
+        topic_category=getattr(submission.topic, "category", None),
         source_filename=submission.source_filename,
         source_path=submission.source_path,
     )

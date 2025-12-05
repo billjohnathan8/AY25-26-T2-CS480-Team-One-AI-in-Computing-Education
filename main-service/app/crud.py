@@ -204,6 +204,10 @@ def list_courses(session: Session, user_id: int | None = None) -> list[Course]:
     return list(session.exec(query).all())
 
 
+def list_topics(session: Session) -> list[CourseTopic]:
+    return list(session.exec(select(CourseTopic)).all())
+
+
 def list_students(session: Session) -> list[Student]:
     return list(session.exec(select(Student)).all())
 

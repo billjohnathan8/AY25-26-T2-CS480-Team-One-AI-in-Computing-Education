@@ -90,6 +90,7 @@ class SubmissionRead(SQLModel):
     student_email: Optional[str] = None
     course_name: Optional[str] = None
     topic_title: Optional[str] = None
+    topic_category: Optional[str] = None
     source_filename: Optional[str] = None
     source_path: Optional[str] = None
 

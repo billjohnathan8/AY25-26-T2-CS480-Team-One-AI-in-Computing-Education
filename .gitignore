@@ -29,6 +29,11 @@ frontend/.env
 .idea/
 .vscode/
 
+# TypeScript build artifacts
+*.tsbuildinfo
+frontend/vite.config.js
+frontend/vite.config.d.ts
+
 # Docker/ML artifacts
 ai-pipeline/mlruns/
 ai-pipeline/models/
